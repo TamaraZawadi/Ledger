@@ -1,0 +1,43 @@
+<%- include('../../partials/head') %>
+<link rel="stylesheet" href="/css/dashboard.css">
+<link rel="stylesheet" href="/css/auth.css">
+</head>
+<body class="app-body">
+<%- include('../../partials/sidebar') %>
+<main class="main-content">
+  <div class="topbar"><div class="topbar-left"><button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button><div><h1 class="page-title">Run Payroll</h1><p class="page-sub">Preview before processing</p></div></div><a href="/payroll" style="font-size:13px;color:#888">← Back</a></div>
+  <div style="padding:1.5rem 2rem">
+    <div class="dash-card" style="margin-bottom:16px;padding:1rem 1.5rem;display:flex;gap:2rem">
+      <div><span style="font-size:11px;color:#888;display:block">Employees</span><span style="font-size:20px;font-weight:700"><%= employees.length %></span></div>
+      <div><span style="font-size:11px;color:#888;display:block">Total Gross</span><span style="font-size:20px;font-weight:700"><%= formatCurrency(totalGross, user.currency) %></span></div>
+      <div><span style="font-size:11px;color:#888;display:block">Total PAYE</span><span style="font-size:20px;font-weight:700;color:#dc3545"><%= formatCurrency(totalPAYE, user.currency) %></span></div>
+      <div><span style="font-size:11px;color:#888;display:block">Net Payout</span><span style="font-size:20px;font-weight:700;color:#00b87f"><%= formatCurrency(totalNet, user.currency) %></span></div>
+    </div>
+    <div class="dash-card">
+      <div class="card-header"><h2>Payroll preview</h2></div>
+      <table class="data-table">
+        <thead><tr><th>Employee</th><th>Dept</th><th>Gross</th><th>PAYE</th><th>NHIF</th><th>NSSF</th><th class="right">Net</th></tr></thead>
+        <tbody>
+        <% employees.forEach(e => { %>
+        <tr>
+          <td><%= e.first_name %> <%= e.last_name %></td>
+          <td style="font-size:11px;color:#888"><%= e.dept || '—' %></td>
+          <td><%= formatCurrency(e.gross, user.currency) %></td>
+          <td style="color:#dc3545"><%= formatCurrency(e.paye, user.currency) %></td>
+          <td><%= formatCurrency(e.nhif, user.currency) %></td>
+          <td><%= formatCurrency(e.nssf, user.currency) %></td>
+          <td class="right" style="font-weight:600;color:#00b87f"><%= formatCurrency(e.net, user.currency) %></td>
+        </tr>
+        <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <form action="/payroll" method="POST" style="margin-top:16px">
+      <input type="hidden" name="periodMonth" value="<%= month %>">
+      <input type="hidden" name="periodYear" value="<%= year %>">
+      <button type="submit" style="background:#0d0d0d;color:#fff;border:none;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Create Payroll Run →</button>
+    </form>
+  </div>
+</main>
+<script src="/js/dashboard.js"></script>
+</body></html>

@@ -1,0 +1,169 @@
+<%- include('../../partials/head') %>
+<link rel="stylesheet" href="/css/dashboard.css">
+<link rel="stylesheet" href="/css/auth.css">
+</head>
+<body class="app-body">
+<%- include('../../partials/sidebar') %>
+<main class="main-content">
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+      <div><h1 class="page-title">Tax</h1><p class="page-sub"><%= year %> — KRA compliance</p></div>
+    </div>
+    <form method="GET" style="margin:0">
+      <select name="year" onchange="this.form.submit()" style="font-size:13px;padding:7px 12px;border:1px solid #ddd;border-radius:7px">
+        <% [2023,2024,2025,2026].forEach(y => { %>
+        <option value="<%= y %>" <%= year==y?'selected':'' %>><%= y %></option>
+        <% }) %>
+      </select>
+    </form>
+  </div>
+
+  <div style="padding:1.5rem 2rem;display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start">
+
+    <!-- VAT summary -->
+    <div class="dash-card">
+      <div class="card-header">
+        <h2>VAT (16%) — Monthly</h2>
+        <span style="font-size:11px;color:#888">Based on income records</span>
+      </div>
+      <table class="data-table">
+        <thead><tr><th>Month</th><th class="right">Gross Income</th><th class="right">VAT (16%)</th></tr></thead>
+        <tbody>
+        <% const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+           let totalVAT = 0;
+           vatSummary.forEach(v => {
+             totalVAT += parseFloat(v.vat||0);
+        %>
+        <tr>
+          <td><%= months[v.month-1] %> <%= year %></td>
+          <td class="right"><%= formatCurrency(v.gross, user.currency) %></td>
+          <td class="right" style="color:#dc3545;font-weight:500"><%= formatCurrency(v.vat, user.currency) %></td>
+        </tr>
+        <% }) %>
+        <% if(vatSummary.length===0){ %>
+        <tr><td colspan="3" style="text-align:center;padding:2rem;color:#888">No income data for <%= year %></td></tr>
+        <% } %>
+        </tbody>
+        <% if(vatSummary.length > 0){ %>
+        <tfoot>
+          <tr style="background:#fce8e9">
+            <td style="font-weight:700">Total VAT owed</td>
+            <td></td>
+            <td class="right" style="font-weight:700;color:#dc3545"><%= formatCurrency(totalVAT, user.currency) %></td>
+          </tr>
+        </tfoot>
+        <% } %>
+      </table>
+    </div>
+
+    <!-- PAYE from payroll -->
+    <div class="dash-card">
+      <div class="card-header">
+        <h2>PAYE — Payroll deductions</h2>
+        <span style="font-size:11px;color:#888">From completed payroll runs</span>
+      </div>
+      <table class="data-table">
+        <thead><tr><th>Month</th><th class="right">PAYE</th><th class="right">NHIF</th><th class="right">NSSF</th></tr></thead>
+        <tbody>
+        <% payeSummary.forEach(p => { %>
+        <tr>
+          <td><%= months[p.month-1] %> <%= year %></td>
+          <td class="right" style="color:#dc3545"><%= formatCurrency(p.paye, user.currency) %></td>
+          <td class="right" style="color:#b87a00"><%= formatCurrency(p.nhif, user.currency) %></td>
+          <td class="right" style="color:#6f42c1"><%= formatCurrency(p.nssf, user.currency) %></td>
+        </tr>
+        <% }) %>
+        <% if(payeSummary.length===0){ %>
+        <tr><td colspan="4" style="text-align:center;padding:2rem;color:#888">No approved payroll runs for <%= year %></td></tr>
+        <% } %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Manual tax record -->
+    <div class="dash-card" style="padding:1.5rem">
+      <h2 style="font-size:14px;font-weight:600;margin-bottom:1rem">Log tax record manually</h2>
+      <form action="/tax" method="POST" class="auth-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tax type</label>
+            <select name="taxType" required>
+              <option value="vat">VAT</option>
+              <option value="paye">PAYE</option>
+              <option value="corporate">Corporate tax</option>
+              <option value="withholding">Withholding tax</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Period</label>
+            <select name="periodMonth">
+              <% months.forEach((m,i) => { %><option value="<%= i+1 %>"><%= m %></option><% }) %>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Year</label>
+            <input type="number" name="periodYear" value="<%= year %>" required>
+          </div>
+          <div class="form-group">
+            <label>Gross amount</label>
+            <input type="number" name="grossAmount" min="0" step="0.01" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tax amount</label>
+            <input type="number" name="taxAmount" min="0" step="0.01" required>
+          </div>
+          <div class="form-group">
+            <label>KRA due date</label>
+            <input type="date" name="dueDate">
+          </div>
+        </div>
+        <button type="submit" class="btn-submit">Save tax record</button>
+      </form>
+    </div>
+
+    <!-- Existing records -->
+    <div class="dash-card">
+      <div class="card-header"><h2>Tax records</h2></div>
+      <table class="data-table">
+        <thead><tr><th>Type</th><th>Period</th><th class="right">Amount</th><th>Paid</th><th></th></tr></thead>
+        <tbody>
+        <% records.forEach(r => { %>
+        <tr>
+          <td style="text-transform:uppercase;font-size:11px;font-weight:600"><%= r.tax_type %></td>
+          <td style="font-size:12px"><%= months[(r.period_month||1)-1] %> <%= r.period_year %></td>
+          <td class="right" style="color:#dc3545;font-weight:500"><%= formatCurrency(r.tax_amount, user.currency) %></td>
+          <td>
+            <% if(r.is_paid){ %>
+            <span style="font-size:11px;color:#00b87f">✅ Paid</span>
+            <% } else { %>
+            <% if(user.role==='admin'){ %>
+            <form action="/tax/<%= r.id %>/paid" method="POST" style="margin:0">
+              <button type="submit" style="background:none;border:1px solid #ddd;padding:3px 8px;border-radius:5px;font-size:11px;cursor:pointer">Mark paid</button>
+            </form>
+            <% } else { %>
+            <span style="font-size:11px;color:#dc3545">Unpaid</span>
+            <% } %>
+            <% } %>
+          </td>
+          <td style="font-size:11px;color:#888"><%= r.due_date ? formatDate(r.due_date) : '' %></td>
+        </tr>
+        <% }) %>
+        <% if(records.length===0){ %>
+        <tr><td colspan="5" style="text-align:center;padding:1.5rem;color:#888">No records added manually</td></tr>
+        <% } %>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</main>
+<script src="/js/dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<%- include('../../partials/head') %>
+<link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body class="app-body">
+<%- include('../../partials/sidebar') %>
+<main class="main-content">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+      <div><h1 class="page-title">Expenses</h1></div>
+    </div>
+    <a href="/expenses/new" class="btn-add"><i class="fas fa-plus"></i> Log Expense</a>
+  </div>
+  <div class="stats-grid" style="grid-template-columns:repeat(4,1fr)">
+    <div class="stat-card expense"><div class="stat-icon"><i class="fas fa-arrow-trend-down"></i></div><div class="stat-body"><span class="stat-label">Total</span><span class="stat-val"><%= formatCurrency(summary.total, user.currency) %></span></div></div>
+    <div class="stat-card" style="background:#fff"><div class="stat-icon" style="background:#fff8e1;color:#b87a00"><i class="fas fa-bolt"></i></div><div class="stat-body"><span class="stat-label">Utilities</span><span class="stat-val"><%= formatCurrency(summary.utilities, user.currency) %></span></div></div>
+    <div class="stat-card" style="background:#fff"><div class="stat-icon" style="background:#e8f0fe;color:#1967d2"><i class="fas fa-truck"></i></div><div class="stat-body"><span class="stat-label">Suppliers</span><span class="stat-val"><%= formatCurrency(summary.suppliers, user.currency) %></span></div></div>
+    <div class="stat-card" style="background:#fff"><div class="stat-icon" style="background:#EEEDFE;color:#6f42c1"><i class="fas fa-money-bill-wave"></i></div><div class="stat-body"><span class="stat-label">Payroll</span><span class="stat-val"><%= formatCurrency(summary.payroll, user.currency) %></span></div></div>
+  </div>
+  <div style="padding:0 2rem 2rem">
+    <div class="dash-card">
+      <div class="card-header"><h2>Expense entries</h2>
+        <form method="GET" action="/expenses" style="display:flex;gap:6px;margin:0">
+          <select name="month" onchange="this.form.submit()" style="font-size:12px;padding:4px 8px;border:1px solid #ddd;border-radius:6px">
+            <% for(let i=1;i<=12;i++){%><option value="<%= i %>" <%=filters.month==i?'selected':''%>><%= new Date(2024,i-1).toLocaleString('default',{month:'short'}) %></option><%}%>
+          </select>
+          <select name="year" onchange="this.form.submit()" style="font-size:12px;padding:4px 8px;border:1px solid #ddd;border-radius:6px">
+            <% [2023,2024,2025,2026].forEach(y=>{%><option value="<%=y%>" <%=filters.year==y?'selected':''%>><%=y%></option><%})%>
+          </select>
+        </form>
+      </div>
+      <% if(expenses.length===0){ %><div class="empty-state"><i class="fas fa-receipt"></i><p>No expenses for this period.</p><a href="/expenses/new" class="btn-add-sm">Log first expense →</a></div>
+      <% }else{ %>
+      <table class="data-table">
+        <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Vendor</th><th class="right">Amount</th><th></th></tr></thead>
+        <tbody>
+        <% expenses.forEach(e => { %>
+        <tr>
+          <td><%= formatDate(e.date) %></td>
+          <td><%= e.description %></td>
+          <td><span class="badge badge-cash"><%= e.category_name || '—' %></span></td>
+          <td style="color:#888;font-size:12px"><%= e.vendor || '—' %></td>
+          <td class="right" style="color:#dc3545;font-weight:500"><%= formatCurrency(e.amount, user.currency) %></td>
+          <td><% if(user.role==='admin'||user.role==='manager'){ %><form action="/expenses/<%=e.id%>/delete" method="POST" onsubmit="return confirm('Delete?')"><button type="submit" style="background:none;border:none;color:#dc3545;cursor:pointer;font-size:12px"><i class="fas fa-trash"></i></button></form><% } %></td>
+        </tr>
+        <% }) %>
+        </tbody>
+      </table>
+      <% } %>
+    </div>
+  </div>
+</main>
+<script src="/js/dashboard.js"></script>
+</body></html>

@@ -1,0 +1,122 @@
+<%- include('../../partials/head') %>
+<link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body class="app-body">
+<%- include('../../partials/sidebar') %>
+<main class="main-content">
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+      <div>
+        <h1 class="page-title"><%= employee.first_name %> <%= employee.last_name %></h1>
+        <p class="page-sub"><%= employee.role_title||'—' %> · <%= employee.department_name||'No department' %></p>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <span style="padding:6px 14px;border-radius:20px;font-size:12px;font-weight:500;
+        background:<%= employee.is_active?'#e0f7ef':'#fce8e9' %>;
+        color:<%= employee.is_active?'#0d5c3d':'#9c1c1c' %>">
+        <%= employee.is_active ? 'Active' : 'Inactive' %>
+      </span>
+      <% if(user.role==='admin'||user.role==='manager'){ %>
+      <a href="/employees/<%= employee.id %>/edit" class="btn-add">Edit</a>
+      <% } %>
+    </div>
+  </div>
+
+  <div style="padding:1.5rem 2rem;display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start">
+
+    <!-- Personal Info -->
+    <div class="dash-card" style="padding:1.5rem">
+      <h2 style="font-size:14px;font-weight:600;margin-bottom:1rem;color:#888;text-transform:uppercase;letter-spacing:0.05em">Personal information</h2>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <% [
+          ['Employee number', employee.employee_number||'—'],
+          ['National ID', employee.id_number||'—'],
+          ['Phone', employee.phone||'—'],
+          ['Email', employee.email||'—'],
+          ['Start date', formatDate(employee.start_date)],
+          ['Employment type', (employee.employment_type||'').replace('_',' ')],
+        ].forEach(([label, val]) => { %>
+        <div style="display:flex;justify-content:space-between;border-bottom:1px solid #f0f0ec;padding-bottom:10px">
+          <span style="font-size:12px;color:#888"><%= label %></span>
+          <span style="font-size:13px;font-weight:500;text-transform:capitalize"><%= val %></span>
+        </div>
+        <% }) %>
+      </div>
+    </div>
+
+    <!-- Pay info -->
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="dash-card" style="padding:1.5rem">
+        <h2 style="font-size:14px;font-weight:600;margin-bottom:1rem;color:#888;text-transform:uppercase;letter-spacing:0.05em">Compensation</h2>
+        <div style="font-size:32px;font-weight:700;color:#0d0d0d;margin-bottom:4px"><%= formatCurrency(employee.salary, user.currency) %></div>
+        <div style="font-size:12px;color:#888">Monthly gross salary</div>
+        <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid #f0f0ec">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+            <span style="font-size:12px;color:#888">Payment method</span>
+            <span class="badge badge-<%= employee.payment_method %>"><%= employee.payment_method %></span>
+          </div>
+          <% if(employee.mpesa_number){ %>
+          <div style="display:flex;justify-content:space-between">
+            <span style="font-size:12px;color:#888">M-Pesa number</span>
+            <span style="font-size:13px;font-weight:500"><%= employee.mpesa_number %></span>
+          </div>
+          <% } %>
+          <% if(employee.bank_name){ %>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span style="font-size:12px;color:#888">Bank</span>
+            <span style="font-size:13px;font-weight:500"><%= employee.bank_name %></span>
+          </div>
+          <div style="display:flex;justify-content:space-between">
+            <span style="font-size:12px;color:#888">Account</span>
+            <span style="font-size:13px;font-weight:500"><%= employee.bank_account||'—' %></span>
+          </div>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="dash-card" style="padding:1.5rem">
+        <h2 style="font-size:14px;font-weight:600;margin-bottom:1rem;color:#888;text-transform:uppercase;letter-spacing:0.05em">Deductions estimate</h2>
+        <%
+          const gross = parseFloat(employee.salary);
+          // Kenya PAYE bands 2024
+          let paye = 0;
+          if (gross > 24000) {
+            if (gross <= 32333) paye = (gross - 24000) * 0.25;
+            else if (gross <= 500000) paye = 2083 + (gross - 32333) * 0.30;
+            else paye = 2083 + 140600 + (gross - 500000) * 0.325;
+          }
+          let nhif = 500;
+          if (gross < 6000) nhif = 150;
+          else if (gross < 12000) nhif = 400;
+          else if (gross < 20000) nhif = 600;
+          else if (gross < 30000) nhif = 850;
+          else if (gross < 50000) nhif = 1100;
+          else nhif = 1700;
+          const nssf = Math.min(gross * 0.06, 1080);
+          const net = gross - paye - nhif - nssf;
+        %>
+        <% [
+          ['Gross salary', gross, '#0d0d0d'],
+          ['PAYE tax', -paye, '#dc3545'],
+          ['NHIF', -nhif, '#dc3545'],
+          ['NSSF', -nssf, '#dc3545'],
+        ].forEach(([label, val, color]) => { %>
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+          <span style="font-size:12px;color:#888"><%= label %></span>
+          <span style="font-size:13px;font-weight:500;color:<%= color %>"><%= val < 0 ? '- ' : '' %><%= formatCurrency(Math.abs(val), user.currency) %></span>
+        </div>
+        <% }) %>
+        <div style="border-top:2px solid #0d0d0d;padding-top:10px;margin-top:4px;display:flex;justify-content:space-between">
+          <span style="font-size:13px;font-weight:600">Estimated net</span>
+          <span style="font-size:16px;font-weight:700;color:#00b87f"><%= formatCurrency(net, user.currency) %></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+<script src="/js/dashboard.js"></script>
+</body>
+</html>

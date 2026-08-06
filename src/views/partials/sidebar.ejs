@@ -1,0 +1,88 @@
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <span class="logo-icon">L</span>
+    <span class="logo-text">LEDGR</span>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-group">
+      <span class="nav-label">Overview</span>
+      <a href="/dashboard" class="nav-item <%= currentPath === '/dashboard' ? 'active' : '' %>">
+        <i class="fas fa-chart-pie"></i> Dashboard
+      </a>
+      <a href="/" class="nav-item <%= currentPath === '/' ? 'active' : '' %>">
+        <i class="fas fa-house"></i> Home page
+      </a>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-label">Finances</span>
+      <a href="/income" class="nav-item <%= currentPath.startsWith('/income') ? 'active' : '' %>">
+        <i class="fas fa-arrow-trend-up"></i> Income
+      </a>
+      <a href="/expenses" class="nav-item <%= currentPath.startsWith('/expenses') ? 'active' : '' %>">
+        <i class="fas fa-arrow-trend-down"></i> Expenses
+      </a>
+      <a href="/billing" class="nav-item <%= currentPath.startsWith('/billing') ? 'active' : '' %>">
+        <i class="fas fa-bolt"></i> Billing
+      </a>
+      <a href="/payroll" class="nav-item <%= currentPath.startsWith('/payroll') ? 'active' : '' %>">
+        <i class="fas fa-money-bill-wave"></i> Payroll
+      </a>
+      <a href="/tax" class="nav-item <%= currentPath.startsWith('/tax') ? 'active' : '' %>">
+        <i class="fas fa-receipt"></i> Tax
+      </a>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-label">Insights</span>
+      <a href="/analytics" class="nav-item <%= currentPath.startsWith('/analytics') ? 'active' : '' %>">
+        <i class="fas fa-chart-line"></i> Analytics
+      </a>
+      <a href="/forecast" class="nav-item <%= currentPath.startsWith('/forecast') ? 'active' : '' %>">
+        <i class="fas fa-wand-magic-sparkles"></i> Forecast
+      </a>
+      <a href="/savings" class="nav-item <%= currentPath.startsWith('/savings') ? 'active' : '' %>">
+        <i class="fas fa-piggy-bank"></i> Savings
+      </a>
+      <a href="/statements" class="nav-item <%= currentPath.startsWith('/statements') ? 'active' : '' %>">
+        <i class="fas fa-file-invoice"></i> Statements
+      </a>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-label">People</span>
+      <a href="/employees" class="nav-item <%= currentPath.startsWith('/employees') ? 'active' : '' %>">
+        <i class="fas fa-users"></i> Employees
+      </a>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-label">Tools</span>
+      <a href="/search" class="nav-item <%= currentPath.startsWith('/search') ? 'active' : '' %>">
+        <i class="fas fa-search"></i> Search
+      </a>
+      <% if (user && (user.role === 'admin' || user.role === 'manager')) { %>
+      <a href="/settings" class="nav-item <%= currentPath.startsWith('/settings') ? 'active' : '' %>">
+        <i class="fas fa-gear"></i> Settings
+      </a>
+      <% } %>
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <div class="user-avatar"><%= user ? user.first_name[0] + user.last_name[0] : 'U' %></div>
+      <div class="user-info">
+        <span class="user-name"><%= user ? user.first_name + ' ' + user.last_name : '' %></span>
+        <span class="user-role"><%= user ? user.role : '' %></span>
+      </div>
+    </div>
+    <form action="/auth/logout" method="POST" style="margin:0">
+      <button type="submit" class="btn-logout" title="Sign out">
+        <i class="fas fa-right-from-bracket"></i>
+      </button>
+    </form>
+  </div>
+
+</aside>

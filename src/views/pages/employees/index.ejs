@@ -1,0 +1,124 @@
+<%- include('../../partials/head') %>
+<link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body class="app-body">
+<%- include('../../partials/sidebar') %>
+<main class="main-content">
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+      <div>
+        <h1 class="page-title">Employees</h1>
+        <p class="page-sub"><%= summary.total_active %> active · <%= summary.active_departments %> departments</p>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <a href="/employees/departments" style="background:#f5f4f1;border:1px solid #e0deda;color:#555;padding:8px 14px;border-radius:6px;font-size:13px;text-decoration:none"><i class="fas fa-sitemap"></i> Departments</a>
+      <% if(user.role==='admin'||user.role==='manager'){ %>
+      <a href="/employees/new" class="btn-add"><i class="fas fa-user-plus"></i> Add Employee</a>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- KPI Row -->
+  <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+    <div class="stat-card" style="background:#fff">
+      <div class="stat-icon" style="background:#e8f0fe;color:#1967d2"><i class="fas fa-users"></i></div>
+      <div class="stat-body">
+        <span class="stat-label">Active employees</span>
+        <span class="stat-val"><%= summary.total_active %></span>
+      </div>
+    </div>
+    <div class="stat-card" style="background:#fff">
+      <div class="stat-icon" style="background:#EEEDFE;color:#6f42c1"><i class="fas fa-sitemap"></i></div>
+      <div class="stat-body">
+        <span class="stat-label">Departments</span>
+        <span class="stat-val"><%= summary.active_departments %></span>
+      </div>
+    </div>
+    <div class="stat-card" style="background:#fff">
+      <div class="stat-icon" style="background:#e0f7ef;color:#00b87f"><i class="fas fa-money-bill-wave"></i></div>
+      <div class="stat-body">
+        <span class="stat-label">Monthly payroll</span>
+        <span class="stat-val"><%= formatCurrency(summary.monthly_payroll, user.currency) %></span>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding:0 2rem 2rem">
+
+    <!-- Filters -->
+    <form method="GET" action="/employees" style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+      <input type="text" name="search" value="<%= filters.search||'' %>" placeholder="Search by name or number…"
+        style="padding:7px 12px;border:1px solid #ddd;border-radius:7px;font-size:13px;flex:1;min-width:180px">
+      <select name="dept" onchange="this.form.submit()" style="font-size:13px;padding:7px 12px;border:1px solid #ddd;border-radius:7px">
+        <option value="">All departments</option>
+        <% departments.forEach(d => { %>
+        <option value="<%= d.id %>" <%= filters.dept===d.id?'selected':'' %>><%= d.name %></option>
+        <% }) %>
+      </select>
+      <select name="status" onchange="this.form.submit()" style="font-size:13px;padding:7px 12px;border:1px solid #ddd;border-radius:7px">
+        <option value="active" <%= filters.status==='active'?'selected':'' %>>Active</option>
+        <option value="inactive" <%= filters.status==='inactive'?'selected':'' %>>Inactive</option>
+        <option value="all" <%= filters.status==='all'?'selected':'' %>>All</option>
+      </select>
+      <button type="submit" style="background:#0d0d0d;color:#fff;border:none;padding:7px 16px;border-radius:7px;font-size:13px;cursor:pointer">Search</button>
+    </form>
+
+    <div class="dash-card">
+      <% if(employees.length===0){ %>
+      <div class="empty-state">
+        <i class="fas fa-users"></i>
+        <p>No employees found.</p>
+        <% if(user.role==='admin'||user.role==='manager'){ %>
+        <a href="/employees/new" class="btn-add-sm">Add first employee →</a>
+        <% } %>
+      </div>
+      <% } else { %>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Department</th>
+            <th>Role</th>
+            <th>Type</th>
+            <th>Payment</th>
+            <th class="right">Salary</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+        <% employees.forEach(e => { %>
+        <tr>
+          <td>
+            <div style="font-weight:500"><%= e.first_name %> <%= e.last_name %></div>
+            <div style="font-size:11px;color:#999"><%= e.employee_number||'' %></div>
+          </td>
+          <td style="font-size:12px"><%= e.department_name||'—' %></td>
+          <td style="font-size:12px;color:#555"><%= e.role_title||'—' %></td>
+          <td><span class="badge badge-cash" style="text-transform:capitalize"><%= (e.employment_type||'').replace('_',' ') %></span></td>
+          <td><span class="badge badge-<%= e.payment_method %>"><%= e.payment_method %></span></td>
+          <td class="right" style="font-weight:600"><%= formatCurrency(e.salary, user.currency) %></td>
+          <td>
+            <span style="font-size:11px;padding:2px 8px;border-radius:20px;
+              background:<%= e.is_active?'#e0f7ef':'#fce8e9' %>;
+              color:<%= e.is_active?'#0d5c3d':'#9c1c1c' %>">
+              <%= e.is_active?'Active':'Inactive' %>
+            </span>
+          </td>
+          <td>
+            <a href="/employees/<%= e.id %>" style="font-size:12px;color:#0d6efd;text-decoration:none">View →</a>
+          </td>
+        </tr>
+        <% }) %>
+        </tbody>
+      </table>
+      <% } %>
+    </div>
+  </div>
+</main>
+<script src="/js/dashboard.js"></script>
+</body>
+</html>

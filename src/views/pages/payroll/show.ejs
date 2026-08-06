@@ -1,0 +1,38 @@
+<%- include('../../partials/head') %>
+<link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body class="app-body">
+<%- include('../../partials/sidebar') %>
+<main class="main-content">
+  <div class="topbar"><div class="topbar-left"><button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button><div><h1 class="page-title">Payroll Run</h1><p class="page-sub"><%= new Date(run.period_year, run.period_month-1).toLocaleString('default',{month:'long'}) %> <%= run.period_year %> · <span style="text-transform:capitalize"><%= run.status %></span></p></div></div>
+    <div style="display:flex;gap:8px">
+      <a href="/statements/payroll/<%= run.id %>" class="btn-add" style="background:#e8f0fe;color:#1967d2"><i class="fas fa-download"></i> Download PDF</a>
+      <% if(run.status==='draft' && user.role==='admin'){ %>
+      <form action="/payroll/<%= run.id %>/approve" method="POST" style="margin:0"><button type="submit" class="btn-add">Approve Run</button></form>
+      <% } %>
+    </div>
+  </div>
+  <div style="padding:1.5rem 2rem">
+    <div class="dash-card">
+      <div class="card-header"><h2>Payroll items</h2></div>
+      <table class="data-table">
+        <thead><tr><th>Employee</th><th>Dept</th><th>Gross</th><th>PAYE</th><th>NHIF+NSSF</th><th>Net</th><th>Status</th></tr></thead>
+        <tbody>
+        <% items.forEach(item => { %>
+        <tr>
+          <td><%= item.first_name %> <%= item.last_name %><br><span style="font-size:11px;color:#999"><%= item.mpesa_number||'—' %></span></td>
+          <td style="font-size:11px;color:#888"><%= item.dept||'—' %></td>
+          <td><%= formatCurrency(item.gross_salary, user.currency) %></td>
+          <td style="color:#dc3545"><%= formatCurrency(item.paye, user.currency) %></td>
+          <td><%= formatCurrency(parseFloat(item.nhif)+parseFloat(item.nssf), user.currency) %></td>
+          <td style="font-weight:600;color:#00b87f"><%= formatCurrency(item.net_salary, user.currency) %></td>
+          <td><span style="font-size:11px;padding:2px 8px;border-radius:20px;background:<%= item.payment_status==='paid'?'#e0f7ef':'#fff8e1' %>;color:<%= item.payment_status==='paid'?'#0d5c3d':'#7a5400' %>"><%= item.payment_status %></span></td>
+        </tr>
+        <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+<script src="/js/dashboard.js"></script>
+</body></html>

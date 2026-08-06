@@ -1,0 +1,56 @@
+<%- include('../../partials/head') %>
+<link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body class="app-body">
+<%- include('../../partials/sidebar') %>
+<main class="main-content">
+  <div class="topbar">
+    <div class="topbar-left"><button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button><div><h1 class="page-title">Billing</h1><p class="page-sub">Automated M-Pesa payments</p></div></div>
+    <a href="/billing/new" class="btn-add"><i class="fas fa-plus"></i> Add Schedule</a>
+  </div>
+  <div style="padding:1.5rem 2rem 0"><h2 style="font-size:14px;font-weight:600;margin-bottom:12px">Payment schedules</h2>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-bottom:2rem">
+  <% schedules.forEach(s => { %>
+  <div style="background:#fff;border:1px solid #e8e8e5;border-radius:10px;padding:1.25rem">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+      <div>
+        <span style="font-weight:600;font-size:14px"><%= s.name %></span><br>
+        <span style="font-size:11px;color:#888;text-transform:capitalize"><%= s.category %></span>
+      </div>
+      <span style="font-size:11px;padding:3px 8px;border-radius:20px;background:<%= s.is_active?'#e0f7ef':'#f5f5f5' %>;color:<%= s.is_active?'#0d5c3d':'#888' %>"><%= s.is_active?'Active':'Paused' %></span>
+    </div>
+    <div style="font-size:22px;font-weight:700;color:#dc3545;margin-bottom:8px">KES <%= Number(s.amount).toLocaleString() %></div>
+    <div style="font-size:11px;color:#888">Due on day <%= s.billing_day %> · <%= s.payment_method %></div>
+    <% if(s.next_due_date){ %><div style="font-size:11px;color:#555;margin-top:4px">Next: <%= new Date(s.next_due_date).toLocaleDateString('en-KE') %></div><% } %>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <% if(user.role==='admin'){ %>
+      <form action="/billing/<%= s.id %>/trigger" method="POST" style="margin:0"><button type="submit" style="background:#0d0d0d;color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer">Pay Now</button></form>
+      <form action="/billing/<%= s.id %>/delete" method="POST" onsubmit="return confirm('Delete schedule?')" style="margin:0"><button type="submit" style="background:none;border:1px solid #ddd;color:#888;padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer">Delete</button></form>
+      <% } %>
+    </div>
+  </div>
+  <% }) %>
+  <% if(schedules.length===0){ %><div class="empty-state"><i class="fas fa-bolt"></i><p>No billing schedules set up.</p><a href="/billing/new" class="btn-add-sm">Add first schedule →</a></div><% } %>
+  </div>
+  <h2 style="font-size:14px;font-weight:600;margin-bottom:12px">Recent transactions</h2>
+  <div class="dash-card">
+  <table class="data-table">
+    <thead><tr><th>Bill</th><th>Amount</th><th>Status</th><th>M-Pesa Ref</th><th>Date</th></tr></thead>
+    <tbody>
+    <% transactions.forEach(t => { %>
+    <tr>
+      <td><%= t.schedule_name || 'Manual' %></td>
+      <td><%= formatCurrency(t.amount, user.currency) %></td>
+      <td><span style="font-size:11px;padding:2px 8px;border-radius:20px;background:<%= t.status==='completed'?'#e0f7ef':t.status==='failed'?'#fce8e9':'#fff8e1' %>;color:<%= t.status==='completed'?'#0d5c3d':t.status==='failed'?'#9c1c1c':'#7a5400' %>"><%= t.status %></span></td>
+      <td style="font-size:12px;color:#888"><%= t.mpesa_ref || '—' %></td>
+      <td style="font-size:12px"><%= formatDate(t.initiated_at) %></td>
+    </tr>
+    <% }) %>
+    <% if(transactions.length===0){ %><tr><td colspan="5" style="text-align:center;padding:2rem;color:#888">No transactions yet</td></tr><% } %>
+    </tbody>
+  </table>
+  </div>
+  </div>
+</main>
+<script src="/js/dashboard.js"></script>
+</body></html>

@@ -1,0 +1,234 @@
+<%- include('../../partials/head') %>
+<link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body class="app-body">
+<%- include('../../partials/sidebar') %>
+<main class="main-content">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+      <div>
+        <h1 class="page-title">Forecast</h1>
+        <p class="page-sub">Predictions based on your historical data</p>
+      </div>
+    </div>
+  </div>
+
+  <% if (!hasData) { %>
+  <div class="empty-state" style="padding:4rem 2rem">
+    <i class="fas fa-wand-magic-sparkles" style="font-size:36px;color:var(--text-3);margin-bottom:16px"></i>
+    <h2 style="font-family:var(--font-display);font-size:1.3rem;margin-bottom:8px">Not Enough Data Yet</h2>
+    <p style="color:var(--text-3);max-width:420px;font-size:14px;margin-bottom:20px">
+      LEDGR needs at least 3 months of income and expense records to generate forecasts.
+      Keep logging your daily transactions and check back soon!
+    </p>
+    <a href="/income" class="btn-add" style="display:inline-flex"><i class="fas fa-plus"></i> Record Income</a>
+    <% if (locals.error) { %>
+      <p style="color:var(--red);margin-top:16px;font-size:13px"><%= error %></p>
+    <% } %>
+  </div>
+  <% } else { %>
+
+  <!-- PREDICTION CARDS -->
+  <div class="stats-grid">
+    <div class="stat-card income">
+      <div class="stat-icon"><i class="fas fa-arrow-trend-up"></i></div>
+      <div class="stat-body">
+        <span class="stat-label">Predicted Income · Next Month</span>
+        <span class="stat-val"><%= formatCurrency(predictions.income[0], user.currency) %></span>
+        <span class="stat-sub">Range: <%= formatCurrency(confidence.income[0].lower, user.currency) %> — <%= formatCurrency(confidence.income[0].upper, user.currency) %></span>
+      </div>
+    </div>
+    <div class="stat-card expense">
+      <div class="stat-icon"><i class="fas fa-arrow-trend-down"></i></div>
+      <div class="stat-body">
+        <span class="stat-label">Predicted Expenses · Next Month</span>
+        <span class="stat-val"><%= formatCurrency(predictions.expenses[0], user.currency) %></span>
+        <span class="stat-sub">Range: <%= formatCurrency(confidence.expenses[0].lower, user.currency) %> — <%= formatCurrency(confidence.expenses[0].upper, user.currency) %></span>
+      </div>
+    </div>
+    <div class="stat-card net">
+      <div class="stat-icon"><i class="fas fa-scale-balanced"></i></div>
+      <div class="stat-body">
+        <span class="stat-label">Predicted Net · Next Month</span>
+        <span class="stat-val <%= predictions.net[0] >= 0 ? 'positive' : 'negative' %>"><%= formatCurrency(predictions.net[0], user.currency) %></span>
+        <span class="stat-sub"><%= predictions.net[0] >= 0 ? 'Expected profit' : 'Expected loss — review spending' %></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHART + SIDE PANEL -->
+  <div class="dash-grid">
+    <div class="dash-card">
+      <div class="card-header"><h2>Income & Expense Forecast</h2></div>
+      <div style="padding:1.5rem"><canvas id="forecastChart" height="280"></canvas></div>
+    </div>
+
+    <div class="dash-side">
+      <!-- Model Quality -->
+      <div class="dash-card">
+        <div class="card-header"><h2>Model Quality</h2></div>
+        <div style="padding:16px 18px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+            <span style="font-size:13px;color:var(--text-2)">Income Model</span>
+            <% if (modelQuality.incomeR2 > 0.7) { %>
+              <span style="font-size:12px;font-weight:600;color:var(--mint)">● Good (<%= (modelQuality.incomeR2 * 100).toFixed(0) %>%)</span>
+            <% } else if (modelQuality.incomeR2 > 0.4) { %>
+              <span style="font-size:12px;font-weight:600;color:var(--amber)">● Fair (<%= (modelQuality.incomeR2 * 100).toFixed(0) %>%)</span>
+            <% } else { %>
+              <span style="font-size:12px;font-weight:600;color:var(--red)">● Limited (<%= (modelQuality.incomeR2 * 100).toFixed(0) %>%)</span>
+            <% } %>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:13px;color:var(--text-2)">Expense Model</span>
+            <% if (modelQuality.expenseR2 > 0.7) { %>
+              <span style="font-size:12px;font-weight:600;color:var(--mint)">● Good (<%= (modelQuality.expenseR2 * 100).toFixed(0) %>%)</span>
+            <% } else if (modelQuality.expenseR2 > 0.4) { %>
+              <span style="font-size:12px;font-weight:600;color:var(--amber)">● Fair (<%= (modelQuality.expenseR2 * 100).toFixed(0) %>%)</span>
+            <% } else { %>
+              <span style="font-size:12px;font-weight:600;color:var(--red)">● Limited (<%= (modelQuality.expenseR2 * 100).toFixed(0) %>%)</span>
+            <% } %>
+          </div>
+          <p style="font-size:11px;color:var(--text-3);margin-top:14px;line-height:1.5">
+            R² measures how well the model fits historical data. Higher = more reliable predictions.
+          </p>
+        </div>
+      </div>
+
+      <!-- Insights -->
+      <div class="dash-card">
+        <div class="card-header"><h2>Insights</h2></div>
+        <div style="padding:14px 18px">
+          <% if (insights.length === 0) { %>
+            <p style="font-size:13px;color:var(--text-3)">No insights available yet.</p>
+          <% } else { %>
+            <% insights.forEach(function(insight) { %>
+            <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:12px">
+              <span style="font-size:16px;flex-shrink:0"><%= insight.icon %></span>
+              <span style="font-size:13px;color:var(--text-2);line-height:1.5"><%= insight.text %></span>
+            </div>
+            <% }); %>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6-MONTH DETAILED PROJECTION TABLE -->
+  <div style="padding:0 2rem 2rem">
+    <div class="dash-card">
+      <div class="card-header"><h2>Detailed 6-Month Projection</h2></div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Month</th>
+            <th>Predicted Income</th>
+            <th>Predicted Expense</th>
+            <th class="right">Expected Net</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% for(let i=0; i<6; i++) { %>
+          <tr>
+            <td style="font-weight:500"><%= futureLabels[i] %></td>
+            <td style="color:var(--mint)"><%= formatCurrency(predictions.income[i], user.currency) %></td>
+            <td style="color:var(--red)"><%= formatCurrency(predictions.expenses[i], user.currency) %></td>
+            <td class="right" style="font-weight:600; color:<%= predictions.net[i] >= 0 ? 'var(--mint)' : 'var(--red)' %>">
+              <%= formatCurrency(predictions.net[i], user.currency) %>
+            </td>
+          </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- CATEGORY FORECAST TABLE -->
+  <% if (categoryForecasts && categoryForecasts.length > 0) { %>
+  <div style="padding:0 2rem 2rem">
+    <div class="dash-card">
+      <div class="card-header"><h2>Expense Category Forecasts</h2></div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Current Monthly Avg</th>
+            <th>Predicted Next Month</th>
+            <th class="right">Trend</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% categoryForecasts.forEach(function(cat) { %>
+          <tr>
+            <td style="font-weight:500"><%= cat.name %></td>
+            <td><%= formatCurrency(cat.currentAvg, user.currency) %></td>
+            <td><%= formatCurrency(cat.predicted, user.currency) %></td>
+            <td class="right">
+              <% if (cat.trend === 'up') { %>
+                <span style="color:var(--red);font-weight:500"><i class="fas fa-arrow-trend-up"></i> Rising</span>
+              <% } else if (cat.trend === 'down') { %>
+                <span style="color:var(--mint);font-weight:500"><i class="fas fa-arrow-trend-down"></i> Falling</span>
+              <% } else { %>
+                <span style="color:var(--text-3);font-weight:500"><i class="fas fa-minus"></i> Stable</span>
+              <% } %>
+            </td>
+          </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <% } %>
+
+  <% } %>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="/js/dashboard.js"></script>
+
+<% if (hasData) { %>
+<script>
+const cd = <%- JSON.stringify(chartData) %>;
+new Chart(document.getElementById('forecastChart'), {
+  type: 'line',
+  data: {
+    labels: cd.labels,
+    datasets: [
+      // Confidence bands (drawn first, behind everything)
+      { label: 'Income Upper', data: cd.incomeUpper, borderWidth: 0, pointRadius: 0, fill: '+1', backgroundColor: 'rgba(0,184,127,0.08)', tension: 0.3, spanGaps: true },
+      { label: 'Income Lower', data: cd.incomeLower, borderWidth: 0, pointRadius: 0, fill: false, backgroundColor: 'transparent', tension: 0.3, spanGaps: true },
+      { label: 'Expense Upper', data: cd.expenseUpper, borderWidth: 0, pointRadius: 0, fill: '+1', backgroundColor: 'rgba(220,53,69,0.08)', tension: 0.3, spanGaps: true },
+      { label: 'Expense Lower', data: cd.expenseLower, borderWidth: 0, pointRadius: 0, fill: false, backgroundColor: 'transparent', tension: 0.3, spanGaps: true },
+      // Historical lines (solid)
+      { label: 'Income', data: cd.incomeHistory, borderColor: '#00b87f', backgroundColor: 'transparent', borderWidth: 2, tension: 0.3, spanGaps: true, pointRadius: 1 },
+      { label: 'Expenses', data: cd.expenseHistory, borderColor: '#dc3545', backgroundColor: 'transparent', borderWidth: 2, tension: 0.3, spanGaps: true, pointRadius: 1 },
+      { label: 'Net Profit', data: cd.netHistory, borderColor: '#4361ee', backgroundColor: 'transparent', borderWidth: 2, tension: 0.3, spanGaps: true, pointRadius: 1 },
+      // Forecast lines (dashed)
+      { label: 'Income (forecast)', data: cd.incomeForecast, borderColor: '#00b87f', backgroundColor: 'transparent', borderWidth: 2, borderDash: [6, 4], tension: 0.3, spanGaps: true, pointRadius: 0 },
+      { label: 'Expenses (forecast)', data: cd.expenseForecast, borderColor: '#dc3545', backgroundColor: 'transparent', borderWidth: 2, borderDash: [6, 4], tension: 0.3, spanGaps: true, pointRadius: 0 },
+      { label: 'Net Profit (forecast)', data: cd.netForecast, borderColor: '#4361ee', backgroundColor: 'transparent', borderWidth: 2, borderDash: [6, 4], tension: 0.3, spanGaps: true, pointRadius: 0 },
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top',
+        labels: {
+          font: { size: 11 },
+          filter: item => !item.text.includes('Upper') && !item.text.includes('Lower')
+        }
+      },
+      tooltip: { mode: 'index', intersect: false }
+    },
+    scales: {
+      y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' } },
+      x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 45 } }
+    },
+    interaction: { mode: 'nearest', axis: 'x', intersect: false }
+  }
+});
+</script>
+<% } %>
+</body></html>

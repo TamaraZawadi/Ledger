@@ -1,0 +1,244 @@
+<%- include('../partials/head') %>
+<link rel="stylesheet" href="/css/landing.css">
+</head>
+<body class="landing-body">
+
+<!-- NAVBAR -->
+<nav class="land-nav">
+  <div class="land-nav-inner">
+    <a href="/" class="land-logo">
+      <span class="logo-mark">L</span>
+      <span>LEDGR</span>
+    </a>
+    <div class="land-nav-links">
+      <a href="#features">Features</a>
+      <a href="#how">How it works</a>
+      <a href="#pricing">Pricing</a>
+    </div>
+    <div class="land-nav-actions">
+      <% if (typeof loggedIn !== 'undefined' && loggedIn) { %>
+        <span class="land-nav-user">👋 <%= user.first_name %></span>
+        <a href="/dashboard" class="btn-primary-land">Go to Dashboard →</a>
+      <% } else { %>
+        <a href="/auth/login" class="btn-ghost">Sign in</a>
+        <a href="/auth/register" class="btn-primary-land">Get started free</a>
+      <% } %>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">🇰🇪 Built for Kenyan retail businesses</div>
+  <h1 class="hero-title">
+    Every shilling.<br>
+    <span class="hero-accent">Accounted for.</span>
+  </h1>
+  <p class="hero-sub">
+    LEDGR is the all-in-one finance platform for boutiques, supermarkets and retail shops —
+    track income, automate billing via M-Pesa, manage payroll, and understand your business
+    numbers at a glance.
+  </p>
+  <div class="hero-cta">
+    <a href="/auth/register" class="btn-primary-land btn-lg">Start for free →</a>
+    <button class="btn-ghost btn-lg" onclick="try { startDemo() } catch(e) { document.getElementById('botPanel').style.display='flex'; document.getElementById('botOverlay').style.display='block'; console.error(e); }">
+      <i class="fas fa-circle-play"></i> Take the tour
+    </button>
+  </div>
+  <div class="hero-preview">
+    <div class="preview-card">
+      <div class="preview-header">
+        <span class="preview-dot red"></span>
+        <span class="preview-dot amber"></span>
+        <span class="preview-dot green"></span>
+        <span class="preview-title">LEDGR Dashboard · June 2025</span>
+      </div>
+      <div class="preview-stats">
+        <div class="pstat green">
+          <span class="pstat-label">Income this month</span>
+          <span class="pstat-val">KES 487,200</span>
+          <span class="pstat-change">↑ 12% vs last month</span>
+        </div>
+        <div class="pstat red">
+          <span class="pstat-label">Total expenses</span>
+          <span class="pstat-val">KES 203,840</span>
+          <span class="pstat-change">↓ 3% vs last month</span>
+        </div>
+        <div class="pstat blue">
+          <span class="pstat-label">Net income</span>
+          <span class="pstat-val">KES 283,360</span>
+          <span class="pstat-change">Savings: KES 28,336</span>
+        </div>
+        <div class="pstat purple">
+          <span class="pstat-label">Active employees</span>
+          <span class="pstat-val">24</span>
+          <span class="pstat-change">Across 5 departments</span>
+        </div>
+      </div>
+      <div class="preview-bar-wrap">
+        <div class="preview-bar-label">Weekly income trend</div>
+        <div class="preview-bars">
+          <% ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].forEach((d,i) => { %>
+          <div class="bar-col">
+            <div class="bar-fill" style="height: <%= [45,62,55,80,70,95,58][i] + '%' %>"></div>
+            <span class="bar-day"><%= d %></span>
+          </div>
+          <% }) %>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div class="section-inner">
+    <div class="section-eyebrow">What LEDGR does</div>
+    <h2 class="section-title">Everything your shop's finances need</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon" style="background:#E1F5EE;color:#0F6E56"><i class="fas fa-arrow-trend-up"></i></div>
+        <h3>Income Tracking</h3>
+        <p>Log daily sales manually or via M-Pesa. See totals by day, week, and month — always know where your money comes from.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:#FAEEDA;color:#633806"><i class="fas fa-bolt"></i></div>
+        <h3>Automated Billing</h3>
+        <p>Schedule recurring payments — electricity, water, Wi-Fi, suppliers — and pay via M-Pesa Daraja automatically on the set date.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:#E6F1FB;color:#0C447C"><i class="fas fa-users"></i></div>
+        <h3>Employee Management</h3>
+        <p>Register staff across Sales, Delivery, Front Desk, Security. Track salaries, payment methods, and run automated payroll.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:#EEEDFE;color:#3C3489"><i class="fas fa-chart-line"></i></div>
+        <h3>Analytics & Trends</h3>
+        <p>Visual expenditure graphs, income trends, and P&L summaries so you can make business decisions with real data.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:#FCEBEB;color:#A32D2D"><i class="fas fa-receipt"></i></div>
+        <h3>Tax Management</h3>
+        <p>VAT computation, PAYE tracking for payroll, and KRA-ready reports. Stay compliant without the spreadsheet chaos.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:#E1F5EE;color:#0F6E56"><i class="fas fa-piggy-bank"></i></div>
+        <h3>Savings Allocation</h3>
+        <p>Set a savings rate (e.g. 10%) and LEDGR automatically calculates how much of your net income goes to reserves each month.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-it-works" id="how">
+  <div class="section-inner">
+    <div class="section-eyebrow">Getting started</div>
+    <h2 class="section-title">Set up in minutes</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h3>Create your business account</h3>
+          <p>Register with your business name, type (boutique, supermarket, retail), and your details. Takes under 2 minutes.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h3>Add employees & set up billing</h3>
+          <p>Log your team across departments, set salaries, and configure recurring bills with M-Pesa payment details.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h3>Track income daily</h3>
+          <p>Enter your daily earnings in seconds. LEDGR tracks everything and builds your financial picture automatically.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <h3>Watch your business grow</h3>
+          <p>Analytics, savings reports, financial statements, and tax summaries — all generated and ready to download.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA BOTTOM -->
+<section class="cta-section">
+  <div class="section-inner cta-inner">
+    <h2>Ready to take control of your finances?</h2>
+    <p>Join retail businesses across Kenya already using LEDGR to manage their money smarter.</p>
+    <a href="/auth/register" class="btn-primary-land btn-lg">Create your free account →</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="land-footer">
+  <div class="section-inner footer-inner">
+    <div class="footer-brand">
+      <span class="land-logo"><span class="logo-mark">L</span> LEDGR</span>
+      <p>Smart finance management for Kenyan retail.</p>
+    </div>
+    <div class="footer-links">
+      <span>© 2025 LEDGR</span>
+      <a href="#">Privacy</a>
+      <a href="#">Terms</a>
+      <a href="#">Support</a>
+    </div>
+  </div>
+</footer>
+
+<!-- ============================================ -->
+<!-- GUIDE BOT                                   -->
+<!-- ============================================ -->
+
+<div class="bot-trigger" onclick="try { startTour() } catch(e) { document.getElementById('botPanel').style.display='flex'; document.getElementById('botOverlay').style.display='block'; console.error(e); }" title="Take the tour" id="botTrigger">
+  <i class="fas fa-robot"></i>
+</div>
+
+<div class="bot-overlay" id="botOverlay" onclick="closeBot()"></div>
+<div class="bot-panel" id="botPanel">
+  <div class="bot-header">
+    <div class="bot-title-row">
+      <div class="bot-avatar"><i class="fas fa-robot"></i></div>
+      <div>
+        <strong>LEDGR Guide</strong>
+        <span class="bot-status"><span class="bot-dot"></span> Online</span>
+      </div>
+    </div>
+    <button class="bot-close" onclick="closeBot()"><i class="fas fa-xmark"></i></button>
+  </div>
+  <div class="bot-messages" id="botMessages">
+    <div class="bot-msg bot">
+      👋 Welcome to <strong>LEDGR</strong>! I'm your guide. I'll walk you through what this platform can do for your business.
+    </div>
+  </div>
+  <div class="bot-options" id="botOptions"></div>
+  <div class="bot-input-row">
+    <input type="text" id="botInput" placeholder="Or type a question…" onkeydown="if(event.key==='Enter')sendBotMsg()">
+    <button onclick="sendBotMsg()"><i class="fas fa-paper-plane"></i></button>
+  </div>
+</div>
+
+<script src="/js/guide-bot.js"></script>
+<style>
+  .typing-indicator span {
+    animation: typing 1.4s infinite both;
+    font-size: 1.5rem;
+    line-height: 0.5;
+  }
+  .typing-indicator span:nth-child(1) { animation-delay: 0s; }
+  .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes typing {
+    0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+    40% { opacity: 1; transform: scale(1.2); }
+  }
+</style>
+</body>
+</html>

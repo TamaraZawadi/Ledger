@@ -1,0 +1,81 @@
+<%- include('../../partials/head') %>
+<link rel="stylesheet" href="/css/auth.css">
+</head>
+<body class="auth-body">
+
+<div class="auth-layout">
+  <!-- Left panel -->
+  <div class="auth-brand">
+    <a href="/" class="auth-logo"><span class="logo-mark">L</span> LEDGR</a>
+    <div class="auth-brand-copy">
+      <h2>Your retail finances,<br>finally under control.</h2>
+      <div class="auth-features">
+        <div class="af"><i class="fas fa-check-circle"></i> M-Pesa automated billing</div>
+        <div class="af"><i class="fas fa-check-circle"></i> Employee payroll management</div>
+        <div class="af"><i class="fas fa-check-circle"></i> Analytics & financial statements</div>
+        <div class="af"><i class="fas fa-check-circle"></i> Tax tracking & KRA compliance</div>
+      </div>
+    </div>
+    <div class="auth-brand-quote">
+      "From boutiques to supermarkets — LEDGR keeps your money clear."
+    </div>
+  </div>
+
+  <!-- Right: form -->
+  <div class="auth-form-wrap">
+    <div class="auth-form-box">
+      <a href="/" class="auth-back-home">
+        <i class="fas fa-arrow-left"></i> Back to home
+      </a>
+      <h1>Welcome back</h1>
+      <p class="auth-sub">Sign in to your LEDGR account</p>
+
+      <% if (typeof loggedout !== 'undefined' && loggedout) { %>
+      <div class="alert alert-success" style="background:#e0f7ef;color:#0d5c3d;border:1px solid #b2dfdb;border-radius:8px;padding:10px 14px;font-size:13px;display:flex;align-items:center;gap:8px">
+        <i class="fas fa-check-circle"></i> You have been signed out successfully.
+      </div>
+      <% } %>
+
+      <% if (typeof expired !== 'undefined' && expired) { %>
+      <div class="alert alert-warning">Your session expired. Please sign in again.</div>
+      <% } %>
+
+      <% if (error) { %>
+      <div class="alert alert-error"><i class="fas fa-circle-exclamation"></i> <%= error %></div>
+      <% } %>
+
+      <form action="/auth/login" method="POST" class="auth-form" novalidate>
+        <div class="form-group">
+          <label for="email">Email address</label>
+          <input type="email" id="email" name="email" placeholder="you@business.com" required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <div class="input-pw">
+            <input type="password" id="password" name="password" placeholder="••••••••" required autocomplete="current-password">
+            <button type="button" onclick="togglePw()" tabindex="-1"><i class="fas fa-eye" id="pwIcon"></i></button>
+          </div>
+        </div>
+        <button type="submit" class="btn-submit">Sign in →</button>
+      </form>
+
+      <p class="auth-switch">Don't have an account? <a href="/auth/register">Create one free</a></p>
+    </div>
+  </div>
+</div>
+
+<script>
+  function togglePw() {
+    const inp = document.getElementById('password');
+    const icon = document.getElementById('pwIcon');
+    if (inp.type === 'password') {
+      inp.type = 'text';
+      icon.className = 'fas fa-eye-slash';
+    } else {
+      inp.type = 'password';
+      icon.className = 'fas fa-eye';
+    }
+  }
+</script>
+</body>
+</html>

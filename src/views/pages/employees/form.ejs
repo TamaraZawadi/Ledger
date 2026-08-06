@@ -1,0 +1,159 @@
+<%- include('../../partials/head') %>
+<link rel="stylesheet" href="/css/dashboard.css">
+<link rel="stylesheet" href="/css/auth.css">
+</head>
+<body class="app-body">
+<%- include('../../partials/sidebar') %>
+<main class="main-content">
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+      <div>
+        <h1 class="page-title"><%= employee ? 'Edit Employee' : 'Add Employee' %></h1>
+      </div>
+    </div>
+    <a href="/employees" style="font-size:13px;color:#888;text-decoration:none">← Back to employees</a>
+  </div>
+
+  <div style="padding:2rem;max-width:680px">
+    <div class="dash-card" style="padding:2rem">
+
+      <% if(error){ %>
+      <div class="alert alert-error"><i class="fas fa-circle-exclamation"></i> <%= error %></div>
+      <% } %>
+
+      <form action="<%= employee ? '/employees/'+employee.id+'/update' : '/employees' %>" method="POST" class="auth-form" novalidate>
+
+        <div class="form-section-label">Personal information</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>First name <span style="color:#dc3545">*</span></label>
+            <input type="text" name="firstName" value="<%= employee ? employee.first_name : '' %>" required>
+          </div>
+          <div class="form-group">
+            <label>Last name <span style="color:#dc3545">*</span></label>
+            <input type="text" name="lastName" value="<%= employee ? employee.last_name : '' %>" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Employee number <span class="optional">(optional)</span></label>
+            <input type="text" name="employeeNumber" value="<%= employee ? employee.employee_number||'' : '' %>" placeholder="e.g. EMP001">
+          </div>
+          <div class="form-group">
+            <label>National ID <span class="optional">(optional)</span></label>
+            <input type="text" name="idNumber" value="<%= employee ? employee.id_number||'' : '' %>">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Phone</label>
+            <input type="text" name="phone" value="<%= employee ? employee.phone||'' : '' %>" placeholder="0722000000">
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" name="email" value="<%= employee ? employee.email||'' : '' %>">
+          </div>
+        </div>
+
+        <div class="form-section-label">Role & department</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Department</label>
+            <select name="departmentId">
+              <option value="">Select department…</option>
+              <% departments.forEach(d => { %>
+              <option value="<%= d.id %>" <%= (employee && employee.department_id===d.id)?'selected':'' %>><%= d.name %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Job title <span class="optional">(optional)</span></label>
+            <input type="text" name="roleTitle" value="<%= employee ? employee.role_title||'' : '' %>" placeholder="e.g. Cashier">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Employment type</label>
+            <select name="employmentType">
+              <% [['full_time','Full time'],['part_time','Part time'],['contract','Contract'],['casual','Casual']].forEach(([v,l]) => { %>
+              <option value="<%= v %>" <%= (employee && employee.employment_type===v)?'selected':'' %>><%= l %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Start date <span style="color:#dc3545">*</span></label>
+            <input type="date" name="startDate" value="<%= employee ? (employee.start_date ? employee.start_date.toString().split('T')[0] : '') : '' %>" required>
+          </div>
+        </div>
+
+        <div class="form-section-label">Salary & payment</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Monthly gross salary (KES) <span style="color:#dc3545">*</span></label>
+            <input type="number" name="salary" value="<%= employee ? employee.salary : '' %>" min="0" step="0.01" required>
+          </div>
+          <div class="form-group">
+            <label>Payment method</label>
+            <select name="paymentMethod" id="paymentMethod" onchange="togglePaymentFields()">
+              <option value="mpesa" <%= (employee && employee.payment_method==='mpesa')?'selected':'' %>>M-Pesa</option>
+              <option value="bank" <%= (employee && employee.payment_method==='bank')?'selected':'' %>>Bank transfer</option>
+              <option value="cash" <%= (employee && employee.payment_method==='cash')?'selected':'' %>>Cash</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="mpesaFields" style="display:<%= (!employee || employee.payment_method==='mpesa' || !employee.payment_method)?'flex':'none' %>;flex-direction:column;gap:12px">
+          <div class="form-group">
+            <label>M-Pesa number</label>
+            <input type="text" name="mpesaNumber" value="<%= employee ? employee.mpesa_number||'' : '' %>" placeholder="0722000000">
+          </div>
+        </div>
+
+        <div id="bankFields" style="display:<%= (employee && employee.payment_method==='bank')?'flex':'none' %>;flex-direction:column;gap:12px">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Bank name</label>
+              <input type="text" name="bankName" value="<%= employee ? employee.bank_name||'' : '' %>" placeholder="e.g. Equity Bank">
+            </div>
+            <div class="form-group">
+              <label>Account number</label>
+              <input type="text" name="bankAccount" value="<%= employee ? employee.bank_account||'' : '' %>">
+            </div>
+          </div>
+        </div>
+
+        <% if(employee){ %>
+        <div class="form-section-label">Status</div>
+        <div class="form-group" style="flex-direction:row;align-items:center;gap:10px">
+          <input type="checkbox" name="isActive" id="isActive" style="width:auto" <%= employee.is_active?'checked':'' %>>
+          <label for="isActive" style="margin:0;font-weight:400">Employee is active</label>
+        </div>
+        <% } %>
+
+        <div style="display:flex;gap:10px;margin-top:8px">
+          <button type="submit" class="btn-submit" style="flex:1"><%= employee ? 'Save changes' : 'Add employee' %></button>
+          <% if(employee && user.role==='admin'){ %>
+          <form action="/employees/<%= employee.id %>/deactivate" method="POST" onsubmit="return confirm('Deactivate this employee?')" style="margin:0">
+            <button type="submit" style="padding:13px 20px;background:#fce8e9;color:#9c1c1c;border:none;border-radius:8px;font-size:14px;cursor:pointer">Deactivate</button>
+          </form>
+          <% } %>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+<script src="/js/dashboard.js"></script>
+<script>
+function togglePaymentFields() {
+  const method = document.getElementById('paymentMethod').value;
+  document.getElementById('mpesaFields').style.display = method === 'mpesa' ? 'flex' : 'none';
+  document.getElementById('bankFields').style.display = method === 'bank' ? 'flex' : 'none';
+}
+</script>
+</body>
+</html>

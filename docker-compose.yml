@@ -1,0 +1,85 @@
+version: '3.9'
+
+services:
+  app:
+    build: .
+    container_name: ledgr_app
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ledgr_db
+      DB_USER: ledgr
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      COOKIE_SECRET: ${COOKIE_SECRET}
+      MPESA_CONSUMER_KEY: ${MPESA_CONSUMER_KEY}
+      MPESA_CONSUMER_SECRET: ${MPESA_CONSUMER_SECRET}
+      MPESA_BUSINESS_SHORTCODE: ${MPESA_BUSINESS_SHORTCODE}
+      MPESA_PASSKEY: ${MPESA_PASSKEY}
+      MPESA_CALLBACK_URL: ${MPESA_CALLBACK_URL}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      AT_API_KEY: ${AT_API_KEY}
+      AT_USERNAME: ${AT_USERNAME}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - uploads:/app/uploads
+    restart: unless-stopped
+    networks:
+      - ledgr_net
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: ledgr_postgres
+    environment:
+      POSTGRES_DB: ledgr_db
+      POSTGRES_USER: ledgr
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ledgr -d ledgr_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - ledgr_net
+
+  cron:
+    build: .
+    container_name: ledgr_cron
+    command: node src/utils/cron.js
+    environment:
+      NODE_ENV: production
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ledgr_db
+      DB_USER: ledgr
+      DB_PASSWORD: ${DB_PASSWORD}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      AT_API_KEY: ${AT_API_KEY}
+      AT_USERNAME: ${AT_USERNAME}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - ledgr_net
+
+volumes:
+  postgres_data:
+  uploads:
+
+networks:
+  ledgr_net:
+    driver: bridge

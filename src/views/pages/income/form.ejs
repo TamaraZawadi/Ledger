@@ -1,0 +1,64 @@
+<%- include('../../partials/head') %>
+<link rel="stylesheet" href="/css/dashboard.css">
+<link rel="stylesheet" href="/css/auth.css">
+</head>
+<body class="app-body">
+<%- include('../../partials/sidebar') %>
+<main class="main-content">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+      <div><h1 class="page-title">Record Income</h1></div>
+    </div>
+    <a href="/income" style="font-size:13px;color:#888">← Back to income</a>
+  </div>
+  <div style="padding:2rem;max-width:560px">
+    <div class="dash-card" style="padding:2rem">
+      <% if(error){ %><div class="alert alert-error"><%= error %></div><% } %>
+      <form action="/income" method="POST" class="auth-form" novalidate>
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" name="date" value="<%= income ? income.date : today %>" required>
+        </div>
+        <div class="form-group">
+          <label>Amount (KES)</label>
+          <input type="number" name="amount" value="<%= income ? income.amount : '' %>" min="0.01" step="0.01" placeholder="e.g. 15000" required>
+        </div>
+        <div class="form-group">
+          <label>Source</label>
+          <select name="source">
+            <option value="daily_sales">Daily Sales</option>
+            <option value="service">Service Fee</option>
+            <option value="online">Online Order</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Payment method</label>
+          <select name="paymentMode">
+            <option value="cash">Cash</option>
+            <option value="mpesa">M-Pesa</option>
+            <option value="card">Card</option>
+            <option value="bank_transfer">Bank Transfer</option>
+          </select>
+        </div>
+        <div class="form-group" id="mpesaRefGroup" style="display:none">
+          <label>M-Pesa Reference</label>
+          <input type="text" name="mpesaRef" placeholder="e.g. QHB7X8Z3K2">
+        </div>
+        <div class="form-group">
+          <label>Description <span class="optional">(optional)</span></label>
+          <input type="text" name="description" placeholder="e.g. Saturday boutique sales">
+        </div>
+        <button type="submit" class="btn-submit">Save Income Entry</button>
+      </form>
+    </div>
+  </div>
+</main>
+<script src="/js/dashboard.js"></script>
+<script>
+  document.querySelector('[name="paymentMode"]').addEventListener('change', function(){
+    document.getElementById('mpesaRefGroup').style.display = this.value === 'mpesa' ? 'flex' : 'none';
+  });
+</script>
+</body></html>

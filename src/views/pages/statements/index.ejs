@@ -1,0 +1,101 @@
+<%- include('../../partials/head') %>
+<link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body class="app-body">
+<%- include('../../partials/sidebar') %>
+<main class="main-content">
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+      <div><h1 class="page-title">Statements</h1><p class="page-sub">Download financial reports as PDF</p></div>
+    </div>
+  </div>
+
+  <div style="padding:1.5rem 2rem;display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start">
+
+    <!-- P&L Download -->
+    <div class="dash-card" style="padding:1.75rem">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.25rem">
+        <div style="width:44px;height:44px;background:#e8f0fe;color:#1967d2;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px"><i class="fas fa-file-invoice-dollar"></i></div>
+        <div>
+          <h2 style="font-size:15px;font-weight:600;margin-bottom:2px">Profit & Loss Statement</h2>
+          <p style="font-size:12px;color:#888">Monthly income vs expenses — PDF</p>
+        </div>
+      </div>
+      <form method="GET" action="/statements/pl" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label style="font-size:11px;font-weight:600;color:#888">Month</label>
+          <select name="month" style="font-size:13px;padding:7px 10px;border:1px solid #ddd;border-radius:7px">
+            <% ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].forEach((m,i) => { %>
+            <option value="<%= i+1 %>" <%= (i+1)===(new Date().getMonth()+1)?'selected':'' %>><%= m %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label style="font-size:11px;font-weight:600;color:#888">Year</label>
+          <select name="year" style="font-size:13px;padding:7px 10px;border:1px solid #ddd;border-radius:7px">
+            <% [2023,2024,2025,2026].forEach(y => { %><option value="<%= y %>" <%= y===new Date().getFullYear()?'selected':'' %>><%= y %></option><% }) %>
+          </select>
+        </div>
+        <button type="submit" style="background:#1967d2;color:#fff;border:none;padding:9px 18px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px">
+          <i class="fas fa-download"></i> Download PDF
+        </button>
+      </form>
+    </div>
+
+    <!-- Payroll Statements -->
+    <div class="dash-card">
+      <div style="display:flex;align-items:center;gap:12px;padding:1.5rem;border-bottom:1px solid #f0f0ec">
+        <div style="width:44px;height:44px;background:#e0f7ef;color:#0d5c3d;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px"><i class="fas fa-money-bill-wave"></i></div>
+        <div>
+          <h2 style="font-size:15px;font-weight:600;margin-bottom:2px">Payroll Reports</h2>
+          <p style="font-size:12px;color:#888">Payslip summaries per payroll run</p>
+        </div>
+      </div>
+      <table class="data-table">
+        <thead><tr><th>Period</th><th class="right">Net payout</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+        <% payrollRuns.forEach(r => { %>
+        <tr>
+          <td><%= new Date(r.period_year, r.period_month-1).toLocaleString('default',{month:'long'}) %> <%= r.period_year %></td>
+          <td class="right" style="font-weight:600"><%= formatCurrency(r.total_net, user.currency) %></td>
+          <td><span style="font-size:11px;padding:2px 8px;border-radius:20px;background:<%= r.status==='paid'?'#e0f7ef':'#fff8e1' %>;color:<%= r.status==='paid'?'#0d5c3d':'#7a5400' %>"><%= r.status %></span></td>
+          <td><a href="/statements/payroll/<%= r.id %>" style="font-size:12px;color:#1967d2;display:flex;align-items:center;gap:4px;text-decoration:none"><i class="fas fa-download"></i> PDF</a></td>
+        </tr>
+        <% }) %>
+        <% if(payrollRuns.length===0){ %>
+        <tr><td colspan="4" style="text-align:center;padding:2rem;color:#888">No payroll runs yet</td></tr>
+        <% } %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Quick links -->
+    <div class="dash-card" style="padding:1.5rem;grid-column:1/-1">
+      <h2 style="font-size:14px;font-weight:600;margin-bottom:1rem">Quick access</h2>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px">
+        <a href="/search" style="display:flex;align-items:center;gap:10px;padding:14px;background:#f5f4f1;border-radius:8px;text-decoration:none;color:#1a1a1a">
+          <i class="fas fa-search" style="color:#888"></i>
+          <div><div style="font-size:13px;font-weight:500">Search transactions</div><div style="font-size:11px;color:#888">Find any record</div></div>
+        </a>
+        <a href="/analytics" style="display:flex;align-items:center;gap:10px;padding:14px;background:#f5f4f1;border-radius:8px;text-decoration:none;color:#1a1a1a">
+          <i class="fas fa-chart-line" style="color:#888"></i>
+          <div><div style="font-size:13px;font-weight:500">Analytics</div><div style="font-size:11px;color:#888">Visual trends</div></div>
+        </a>
+        <a href="/savings" style="display:flex;align-items:center;gap:10px;padding:14px;background:#f5f4f1;border-radius:8px;text-decoration:none;color:#1a1a1a">
+          <i class="fas fa-piggy-bank" style="color:#888"></i>
+          <div><div style="font-size:13px;font-weight:500">Savings report</div><div style="font-size:11px;color:#888">Monthly allocation</div></div>
+        </a>
+        <a href="/tax" style="display:flex;align-items:center;gap:10px;padding:14px;background:#f5f4f1;border-radius:8px;text-decoration:none;color:#1a1a1a">
+          <i class="fas fa-receipt" style="color:#888"></i>
+          <div><div style="font-size:13px;font-weight:500">Tax summary</div><div style="font-size:11px;color:#888">VAT & PAYE</div></div>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</main>
+<script src="/js/dashboard.js"></script>
+</body>
+</html>

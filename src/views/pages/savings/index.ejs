@@ -1,0 +1,141 @@
+<%- include('../../partials/head') %>
+<link rel="stylesheet" href="/css/dashboard.css">
+<link rel="stylesheet" href="/css/auth.css">
+</head>
+<body class="app-body">
+<%- include('../../partials/sidebar') %>
+<main class="main-content">
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+      <div>
+        <h1 class="page-title">Savings</h1>
+        <p class="page-sub">Rate: <%= savingsRate %>% of net income · <%= year %></p>
+      </div>
+    </div>
+    <form method="GET" style="margin:0">
+      <select name="year" onchange="this.form.submit()" style="font-size:13px;padding:7px 12px;border:1px solid #ddd;border-radius:7px">
+        <% [2023,2024,2025,2026].forEach(y => { %><option value="<%= y %>" <%= year==y?'selected':'' %>><%= y %></option><% }) %>
+      </select>
+    </form>
+  </div>
+
+  <!-- Summary cards -->
+  <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+    <div class="stat-card savings">
+      <div class="stat-icon"><i class="fas fa-piggy-bank"></i></div>
+      <div class="stat-body">
+        <span class="stat-label">Total allocated (<%= year %>)</span>
+        <span class="stat-val"><%= formatCurrency(summary.total_saved, user.currency) %></span>
+      </div>
+    </div>
+    <div class="stat-card" style="background:#fff">
+      <div class="stat-icon" style="background:#e0f7ef;color:#00b87f"><i class="fas fa-check-circle"></i></div>
+      <div class="stat-body">
+        <span class="stat-label">Transferred</span>
+        <span class="stat-val"><%= formatCurrency(summary.transferred, user.currency) %></span>
+      </div>
+    </div>
+    <div class="stat-card" style="background:#fff">
+      <div class="stat-icon" style="background:#fff8e1;color:#b87a00"><i class="fas fa-clock"></i></div>
+      <div class="stat-body">
+        <span class="stat-label">Pending transfer</span>
+        <span class="stat-val"><%= formatCurrency(summary.pending, user.currency) %></span>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding:0 2rem 2rem;display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:start">
+
+    <!-- Allocations table -->
+    <div class="dash-card">
+      <div class="card-header"><h2>Monthly savings allocations</h2></div>
+      <table class="data-table">
+        <thead><tr><th>Month</th><th class="right">Net Income</th><th class="right">Rate</th><th class="right">Saved</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+        <% const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+           allocations.forEach(a => { %>
+        <tr>
+          <td><%= months[a.period_month-1] %> <%= a.period_year %></td>
+          <td class="right"><%= formatCurrency(a.net_income, user.currency) %></td>
+          <td class="right"><%= parseFloat(a.savings_rate).toFixed(1) %>%</td>
+          <td class="right" style="font-weight:600;color:#6f42c1"><%= formatCurrency(a.amount, user.currency) %></td>
+          <td>
+            <span style="font-size:11px;padding:2px 8px;border-radius:20px;
+              background:<%= a.status==='transferred'?'#e0f7ef':'#fff8e1' %>;
+              color:<%= a.status==='transferred'?'#0d5c3d':'#7a5400' %>">
+              <%= a.status %>
+            </span>
+          </td>
+          <td>
+            <% if(a.status==='pending' && user.role==='admin'){ %>
+            <button onclick="openTransferModal('<%= a.id %>','<%= formatCurrency(a.amount, user.currency) %>')"
+              style="background:none;border:1px solid #ddd;padding:3px 10px;border-radius:5px;font-size:11px;cursor:pointer">
+              Mark transferred
+            </button>
+            <% } %>
+          </td>
+        </tr>
+        <% }) %>
+        <% if(allocations.length===0){ %>
+        <tr><td colspan="6" style="text-align:center;padding:2rem;color:#888">No savings allocations yet. Compute one below.</td></tr>
+        <% } %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Compute new allocation -->
+    <div class="dash-card" style="padding:1.5rem">
+      <h2 style="font-size:14px;font-weight:600;margin-bottom:4px">Compute allocation</h2>
+      <p style="font-size:12px;color:#888;margin-bottom:1.25rem">Auto-calculates <%= savingsRate %>% of your net income for the selected month.</p>
+      <form action="/savings/compute" method="POST" class="auth-form">
+        <div class="form-group">
+          <label>Month</label>
+          <select name="periodMonth">
+            <% months.forEach((m,i) => { %><option value="<%= i+1 %>"><%= m %></option><% }) %>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Year</label>
+          <input type="number" name="periodYear" value="<%= year %>">
+        </div>
+        <button type="submit" class="btn-submit" style="margin-top:4px">Compute savings</button>
+      </form>
+      <div style="margin-top:1.25rem;padding:12px;background:#f5f4f1;border-radius:8px;font-size:12px;color:#555">
+        <strong>How it works:</strong> LEDGR takes total income minus total expenses for the month, then applies your <%= savingsRate %>% savings rate. You can change the rate in <a href="/settings" style="color:#0d6efd">Settings</a>.
+      </div>
+    </div>
+  </div>
+
+  <!-- Transfer modal -->
+  <div id="transferModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:300;align-items:center;justify-content:center">
+    <div style="background:#fff;border-radius:12px;padding:2rem;width:360px;max-width:90vw">
+      <h3 style="margin-bottom:4px;font-size:16px">Mark as transferred</h3>
+      <p id="transferAmount" style="color:#888;font-size:13px;margin-bottom:1.25rem"></p>
+      <form id="transferForm" method="POST" class="auth-form">
+        <div class="form-group">
+          <label>Account reference <span class="optional">(optional)</span></label>
+          <input type="text" name="accountReference" placeholder="e.g. Savings account XXXX">
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button type="submit" class="btn-submit" style="flex:1">Confirm transfer</button>
+          <button type="button" onclick="closeTransferModal()" style="padding:13px 16px;background:#f5f4f1;border:none;border-radius:8px;cursor:pointer;font-size:14px">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+<script src="/js/dashboard.js"></script>
+<script>
+function openTransferModal(id, amount) {
+  document.getElementById('transferForm').action = '/savings/' + id + '/transfer';
+  document.getElementById('transferAmount').textContent = 'Savings amount: ' + amount;
+  document.getElementById('transferModal').style.display = 'flex';
+}
+function closeTransferModal() {
+  document.getElementById('transferModal').style.display = 'none';
+}
+</script>
+</body>
+</html>

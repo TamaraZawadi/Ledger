@@ -1,0 +1,97 @@
+<%- include('../../partials/head') %>
+<link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body class="app-body">
+<%- include('../../partials/sidebar') %>
+<main class="main-content">
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+      <div><h1 class="page-title">Search</h1><p class="page-sub">Search across all income & expense records</p></div>
+    </div>
+  </div>
+
+  <div style="padding:1.5rem 2rem">
+
+    <!-- Search form -->
+    <div class="dash-card" style="padding:1.5rem;margin-bottom:16px">
+      <form method="GET" action="/search" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+        <div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:4px">
+          <label style="font-size:11px;font-weight:600;color:#888">Keyword</label>
+          <input type="text" name="q" value="<%= query.q||'' %>" placeholder="Search description, vendor…"
+            style="padding:9px 12px;border:1.5px solid #ddd;border-radius:7px;font-size:14px;outline:none">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label style="font-size:11px;font-weight:600;color:#888">From</label>
+          <input type="date" name="from" value="<%= query.from||'' %>"
+            style="padding:8px 10px;border:1px solid #ddd;border-radius:7px;font-size:13px">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label style="font-size:11px;font-weight:600;color:#888">To</label>
+          <input type="date" name="to" value="<%= query.to||'' %>"
+            style="padding:8px 10px;border:1px solid #ddd;border-radius:7px;font-size:13px">
+        </div>
+        <button type="submit" style="background:#0d0d0d;color:#fff;border:none;padding:9px 20px;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer">
+          <i class="fas fa-search"></i> Search
+        </button>
+        <% if(query.q||query.from){ %>
+        <a href="/search" style="padding:9px 16px;border:1px solid #ddd;border-radius:7px;font-size:13px;color:#888;text-decoration:none">Clear</a>
+        <% } %>
+      </form>
+    </div>
+
+    <!-- Results -->
+    <% if(results !== null){ %>
+    <div class="dash-card">
+      <div class="card-header">
+        <h2><%= results.length %> result<%= results.length!==1?'s':'' %> found</h2>
+        <% if(query.q){ %><span style="font-size:12px;color:#888">for "<%= query.q %>"</span><% } %>
+      </div>
+      <% if(results.length===0){ %>
+      <div class="empty-state"><i class="fas fa-magnifying-glass"></i><p>No records match your search.</p></div>
+      <% } else { %>
+      <table class="data-table">
+        <thead><tr><th>Type</th><th>Date</th><th>Description</th><th>Method</th><th class="right">Amount</th></tr></thead>
+        <tbody>
+        <% results.forEach(r => { %>
+        <tr>
+          <td>
+            <span style="font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;
+              background:<%= r.type==='income'?'#e0f7ef':'#fce8e9' %>;
+              color:<%= r.type==='income'?'#0d5c3d':'#9c1c1c' %>">
+              <%= r.type %>
+            </span>
+          </td>
+          <td style="font-size:12px"><%= formatDate(r.date) %></td>
+          <td style="font-size:13px"><%= r.description||'—' %></td>
+          <td><span class="badge badge-<%= r.extra %>"><%= r.extra||'—' %></span></td>
+          <td class="right" style="font-weight:600;color:<%= r.type==='income'?'#00b87f':'#dc3545' %>">
+            <%= r.type==='income'?'+':'-' %> <%= formatCurrency(r.amount, user.currency) %>
+          </td>
+        </tr>
+        <% }) %>
+        </tbody>
+      </table>
+      <% } %>
+    </div>
+    <% } else { %>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:8px">
+      <% [
+        {icon:'fa-arrow-trend-up',label:'Recent income',href:'/income',color:'#e0f7ef',tc:'#0d5c3d'},
+        {icon:'fa-arrow-trend-down',label:'Recent expenses',href:'/expenses',color:'#fce8e9',tc:'#9c1c1c'},
+        {icon:'fa-bolt',label:'Billing transactions',href:'/billing',color:'#fff8e1',tc:'#7a5400'},
+        {icon:'fa-money-bill-wave',label:'Payroll records',href:'/payroll',color:'#EEEDFE',tc:'#3C3489'},
+      ].forEach(item => { %>
+      <a href="<%= item.href %>" style="display:flex;align-items:center;gap:12px;padding:16px;background:#fff;border:1px solid #e8e8e5;border-radius:10px;text-decoration:none;color:#1a1a1a">
+        <div style="width:36px;height:36px;border-radius:8px;background:<%= item.color %>;color:<%= item.tc %>;display:flex;align-items:center;justify-content:center;font-size:15px"><i class="fas <%= item.icon %>"></i></div>
+        <span style="font-size:13px;font-weight:500"><%= item.label %></span>
+      </a>
+      <% }) %>
+    </div>
+    <% } %>
+  </div>
+</main>
+<script src="/js/dashboard.js"></script>
+</body>
+</html>

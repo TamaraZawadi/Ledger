@@ -1,0 +1,80 @@
+<%- include('../../partials/head') %>
+<link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body class="app-body">
+<%- include('../../partials/sidebar') %>
+<main class="main-content">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+      <div><h1 class="page-title">Income</h1>
+      <p class="page-sub"><%= new Date(filters.year, filters.month - 1).toLocaleString('default',{month:'long'}) %> <%= filters.year %></p></div>
+    </div>
+    <a href="/income/new" class="btn-add"><i class="fas fa-plus"></i> Record Income</a>
+  </div>
+
+  <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+    <div class="stat-card income">
+      <div class="stat-icon"><i class="fas fa-arrow-trend-up"></i></div>
+      <div class="stat-body">
+        <span class="stat-label">Total income</span>
+        <span class="stat-val"><%= formatCurrency(summary.total, user.currency) %></span>
+        <span class="stat-sub"><%= summary.entry_count %> entries</span>
+      </div>
+    </div>
+    <div class="stat-card" style="background:#fff">
+      <div class="stat-icon" style="background:#E6F1FB;color:#1967d2"><i class="fas fa-mobile-screen"></i></div>
+      <div class="stat-body">
+        <span class="stat-label">M-Pesa income</span>
+        <span class="stat-val"><%= formatCurrency(summary.mpesa_total, user.currency) %></span>
+        <span class="stat-sub">Cash: <%= formatCurrency(summary.cash_total, user.currency) %></span>
+      </div>
+    </div>
+    <div class="stat-card" style="background:#fff">
+      <div class="stat-icon" style="background:#EEEDFE;color:#6f42c1"><i class="fas fa-calculator"></i></div>
+      <div class="stat-body">
+        <span class="stat-label">Daily average</span>
+        <span class="stat-val"><%= formatCurrency(summary.daily_avg, user.currency) %></span>
+        <span class="stat-sub">This month</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding:0 2rem 2rem">
+    <div class="dash-card">
+      <div class="card-header">
+        <h2>Income entries</h2>
+        <div style="display:flex;gap:8px;align-items:center">
+          <form method="GET" action="/income" style="display:flex;gap:6px;margin:0">
+            <select name="month" onchange="this.form.submit()" style="font-size:12px;padding:4px 8px;border:1px solid #ddd;border-radius:6px">
+              <% for(let i=1;i<=12;i++){%><option value="<%= i %>" <%=filters.month==i?'selected':''%>><%= new Date(2024,i-1).toLocaleString('default',{month:'short'}) %></option><%}%>
+            </select>
+            <select name="year" onchange="this.form.submit()" style="font-size:12px;padding:4px 8px;border:1px solid #ddd;border-radius:6px">
+              <% [2023,2024,2025,2026].forEach(y=>{%><option value="<%=y%>" <%=filters.year==y?'selected':''%>><%=y%></option><%})%>
+            </select>
+          </form>
+        </div>
+      </div>
+      <% if(records.length === 0){ %>
+      <div class="empty-state"><i class="fas fa-inbox"></i><p>No income recorded for this period.</p><a href="/income/new" class="btn-add-sm">Record first entry →</a></div>
+      <% } else { %>
+      <table class="data-table">
+        <thead><tr><th>Date</th><th>Source / Description</th><th>Method</th><th class="right">Amount</th><th></th></tr></thead>
+        <tbody>
+        <% records.forEach(r => { %>
+        <tr>
+          <td><%= formatDate(r.date) %></td>
+          <td><%= r.description || r.source || 'Daily sales' %></td>
+          <td><span class="badge badge-<%= r.payment_mode %>"><%= r.payment_mode %></span></td>
+          <td class="right amount-positive"><%= formatCurrency(r.amount, user.currency) %></td>
+          <td><% if(user.role==='admin'||user.role==='manager'){ %><form action="/income/<%=r.id%>/delete" method="POST" onsubmit="return confirm('Delete this entry?')"><button type="submit" style="background:none;border:none;color:#dc3545;cursor:pointer;font-size:12px"><i class="fas fa-trash"></i></button></form><% } %></td>
+        </tr>
+        <% }) %>
+        </tbody>
+      </table>
+      <% } %>
+    </div>
+  </div>
+</main>
+<script src="/js/dashboard.js"></script>
+</body></html>

@@ -1,0 +1,217 @@
+<%- include('../partials/head') %>
+<link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body class="app-body">
+
+<%- include('../partials/sidebar') %>
+
+<main class="main-content">
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+      <div>
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-sub"><%= month %> <%= year %> · <%= user.business_name %></p>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <a href="/income" class="btn-add">
+        <i class="fas fa-plus"></i> Record Income
+      </a>
+    </div>
+  </div>
+
+  <!-- WELCOME BANNER -->
+  <% if (welcome) { %>
+  <div class="welcome-banner" id="welcomeBanner">
+    <div class="welcome-content">
+      <span class="welcome-emoji">🎉</span>
+      <div>
+        <strong>Welcome to LEDGR, <%= user.first_name %>!</strong>
+        <span>Your business account is set up. Start by adding employees or recording your first income entry.</span>
+      </div>
+    </div>
+    <button onclick="document.getElementById('welcomeBanner').remove()"><i class="fas fa-xmark"></i></button>
+  </div>
+  <% } %>
+
+  <!-- KPI STAT CARDS -->
+  <div class="stats-grid">
+    <div class="stat-card income">
+      <div class="stat-icon"><i class="fas fa-arrow-trend-up"></i></div>
+      <div class="stat-body">
+        <span class="stat-label">Income · <%= month %></span>
+        <span class="stat-val"><%= formatCurrency(stats.income, user.currency) %></span>
+        <span class="stat-sub">Today: <%= formatCurrency(stats.incomeToday, user.currency) %></span>
+      </div>
+    </div>
+    <div class="stat-card expense">
+      <div class="stat-icon"><i class="fas fa-arrow-trend-down"></i></div>
+      <div class="stat-body">
+        <span class="stat-label">Expenses · <%= month %></span>
+        <span class="stat-val"><%= formatCurrency(stats.expenses, user.currency) %></span>
+        <span class="stat-sub">Monthly payroll: <%= formatCurrency(stats.monthlyPayroll, user.currency) %></span>
+      </div>
+    </div>
+    <div class="stat-card net">
+      <div class="stat-icon"><i class="fas fa-scale-balanced"></i></div>
+      <div class="stat-body">
+        <span class="stat-label">Net Income · <%= month %></span>
+        <span class="stat-val <%= stats.netIncome >= 0 ? 'positive' : 'negative' %>">
+          <%= formatCurrency(stats.netIncome, user.currency) %>
+        </span>
+        <span class="stat-sub"><%= stats.netIncome >= 0 ? 'Profitable month' : 'Review expenses' %></span>
+      </div>
+    </div>
+    <div class="stat-card savings">
+      <div class="stat-icon"><i class="fas fa-piggy-bank"></i></div>
+      <div class="stat-body">
+        <span class="stat-label">Savings (<%= stats.savingsRate %>%)</span>
+        <span class="stat-val"><%= formatCurrency(stats.savings, user.currency) %></span>
+        <span class="stat-sub">Auto-allocated from net income</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTENT GRID -->
+  <div class="dash-grid">
+    <!-- Recent Activity -->
+    <div class="dash-card">
+      <div class="card-header">
+        <h2>Recent income entries</h2>
+        <a href="/income" class="card-link">View all →</a>
+      </div>
+      <% if (recentActivity.length === 0) { %>
+      <div class="empty-state">
+        <i class="fas fa-inbox"></i>
+        <p>No income recorded yet.</p>
+        <a href="/income" class="btn-add-sm">Record first entry →</a>
+      </div>
+      <% } else { %>
+      <table class="data-table">
+        <thead>
+          <tr><th>Date</th><th>Source</th><th>Method</th><th class="right">Amount</th></tr>
+        </thead>
+        <tbody>
+          <% recentActivity.forEach(r => { %>
+          <tr>
+            <td><%= formatDate(r.date) %></td>
+            <td><%= r.description || r.source || 'Daily sales' %></td>
+            <td><span class="badge badge-<%= r.payment_mode %>"><%= r.payment_mode %></span></td>
+            <td class="right amount-positive"><%= formatCurrency(r.amount, user.currency) %></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <% } %>
+    </div>
+
+    <!-- Right column -->
+    <div class="dash-side">
+      <!-- Employees snapshot -->
+      <div class="dash-card">
+        <div class="card-header">
+          <h2>Team</h2>
+          <a href="/employees" class="card-link">Manage →</a>
+        </div>
+        <div class="team-stats">
+          <div class="team-stat">
+            <span class="ts-val"><%= stats.employees %></span>
+            <span class="ts-label">Active employees</span>
+          </div>
+          <div class="team-stat">
+            <span class="ts-val"><%= stats.departments %></span>
+            <span class="ts-label">Departments</span>
+          </div>
+          <div class="team-stat full">
+            <span class="ts-label">Monthly payroll</span>
+            <span class="ts-val"><%= formatCurrency(stats.monthlyPayroll, user.currency) %></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upcoming Bills -->
+      <div class="dash-card">
+        <div class="card-header">
+          <h2>Upcoming bills</h2>
+          <a href="/billing" class="card-link">View all →</a>
+        </div>
+        <% if (upcomingBills.length === 0) { %>
+        <div class="empty-state small">
+          <p>No bills due in the next 14 days.</p>
+        </div>
+        <% } else { %>
+        <div class="bills-list">
+          <% upcomingBills.forEach(b => { %>
+          <div class="bill-item">
+            <div class="bill-info">
+              <span class="bill-name"><%= b.name %></span>
+              <span class="bill-due">Due <%= formatDate(b.next_due_date) %></span>
+            </div>
+            <span class="bill-amount"><%= formatCurrency(b.amount, user.currency) %></span>
+          </div>
+          <% }) %>
+        </div>
+        <% } %>
+      </div>
+
+      <!-- Quick actions -->
+      <div class="dash-card">
+        <div class="card-header"><h2>Quick actions</h2></div>
+        <div class="quick-actions">
+          <a href="/income" class="qa-btn"><i class="fas fa-plus"></i> Record income</a>
+          <a href="/expenses" class="qa-btn"><i class="fas fa-minus"></i> Log expense</a>
+          <a href="/employees/new" class="qa-btn"><i class="fas fa-user-plus"></i> Add employee</a>
+          <a href="/statements" class="qa-btn"><i class="fas fa-file-invoice"></i> Get report</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- GUIDE BOT (compact, in-app version) -->
+<div class="bot-trigger small" onclick="try { openBot() } catch(e) { document.getElementById('botPanel').style.display='flex'; document.getElementById('botOverlay').style.display='block'; console.error(e); }" title="Help & Guide" id="botTrigger">
+  <i class="fas fa-robot"></i>
+  <span>Guide</span>
+</div>
+
+<div class="bot-overlay" id="botOverlay" onclick="closeBot()"></div>
+<div class="bot-panel" id="botPanel">
+  <div class="bot-header">
+    <div class="bot-title-row">
+      <div class="bot-avatar"><i class="fas fa-robot"></i></div>
+      <div><strong>LEDGR Guide</strong><span class="bot-status"><span class="bot-dot"></span> Online</span></div>
+    </div>
+    <button class="bot-close" onclick="closeBot()"><i class="fas fa-xmark"></i></button>
+  </div>
+  <div class="bot-messages" id="botMessages">
+    <div class="bot-msg bot">
+      Hi <%= user.first_name %>! 👋 I can guide you around LEDGR. What would you like to know?
+    </div>
+  </div>
+  <div class="bot-options" id="botOptions"></div>
+  <div class="bot-input-row">
+    <input type="text" id="botInput" placeholder="Ask anything…" onkeydown="if(event.key==='Enter')sendBotMsg()">
+    <button onclick="sendBotMsg()"><i class="fas fa-paper-plane"></i></button>
+  </div>
+</div>
+
+<script src="/js/guide-bot.js"></script>
+<script src="/js/dashboard.js"></script>
+<style>
+  .typing-indicator span {
+    animation: typing 1.4s infinite both;
+    font-size: 1.5rem;
+    line-height: 0.5;
+  }
+  .typing-indicator span:nth-child(1) { animation-delay: 0s; }
+  .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes typing {
+    0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+    40% { opacity: 1; transform: scale(1.2); }
+  }
+</style>
+</body>
+</html>
