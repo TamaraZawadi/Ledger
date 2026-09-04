@@ -68,14 +68,14 @@ Ledger/
     
  
 ### Installation {Docker setup}
-Enable virtualization from the Task Manager
-Install WSL2 frpm Powershell 
-Download and install Docker Desktop
-```to build and start a fresh
-    docker compose up --build
-```to stop and remove
-    docker compose down -v
-Access at https://localhost:3000                    
+    Enable virtualization from the Task Manager
+    Install WSL2 from Powershell 
+    Download and install Docker Desktop
+    ```to build and start a fresh
+        docker compose up --build
+    ```to stop and remove
+        docker compose down -v
+    Access at https://localhost:3000                    
 
 
 ### Environment Setup
