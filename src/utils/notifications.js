@@ -115,7 +115,7 @@ const sendSMS = async ({ to, message }) => {
     
     return result;
   } catch (error) {
-    console.error('[SMS] Africa\\'s Talking Error:', error);
+    console.error('[SMS] Africa\'s Talking Error:', error);
     throw error;
   }
 };
