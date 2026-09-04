@@ -65,30 +65,29 @@ Ledger/
 2. **Install dependencies**
     npm install
     
-    
- 
+
 ### Installation {Docker setup}
-    Enable virtualization from the Task Manager
-    Install WSL2 from Powershell 
-    Download and install Docker Desktop
+    - Enable virtualization from the Task Manager
+    - Install WSL2 from Powershell 
+    - Download and install Docker Desktop
     ```to build and start a fresh
         docker compose up --build
     ```to stop and remove
         docker compose down -v
-    Access at https://localhost:3000                    
+    - Access at https://localhost:3000                    
 
 
 ### Environment Setup
-    copy env.example to .env 
-    edit .env with your configurations i.e. DB_PASSWORD, PORT etc
+    - copy env.example to .env 
+    - edit .env with your configurations i.e. DB_PASSWORD, PORT etc
 
 
 ### Database Setup
-    npm run migrate
-    npm run seed
+    - npm run migrate
+    - npm run seed
 
 
 ### Running the Application     
-    npm run dev
-    Application runs on https://localhost:3000
+    - npm run dev
+    - Application runs on https://localhost:3000
 
