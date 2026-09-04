@@ -70,6 +70,7 @@ Ledger/
 1.  Enable virtualization from the Task Manager
 2.  Install WSL2 from Powershell 
 1.  Download and install Docker Desktop
+
     ```to build and start a fresh
         docker compose up --build
     ```to stop and remove
